@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: dream-bot-api
+    runtime: node
+    plan: starter
+    rootDir: .
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run prisma:migrate && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: TELEGRAM_WEBHOOK_URL
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: REQUIRED_CHAT_IDS
+        sync: false
+      - key: ENABLE_STARS_PAYMENTS
+        value: "false"
+      - key: ENABLE_REWARD_REDEMPTION
+        value: "false"

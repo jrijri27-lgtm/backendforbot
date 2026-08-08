@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  CREDIT_PURCHASE
+  CREDIT_ADJUSTMENT
+  PARTNER_REWARD
+  POOL_REWARD
+  REDEMPTION_HOLD
+  REDEMPTION_RELEASE
+  REDEMPTION_REJECTED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  REVERSED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  telegramId         BigInt             @unique
+  username           String?
+  firstName          String?
+  lastName           String?
+  isBanned           Boolean            @default(false)
+  creditsBalance     Decimal            @default(0) @db.Decimal(30, 6)
+  starsBalance       Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  partner             Partner?           @relation("PartnerUser")
+  invitedPartners     Partner[]          @relation("Inviter")
+  stakingPools        StakingPool[]
+  transactions        Transaction[]
+  withdrawalRequests  WithdrawalRequest[]
+
+  @@index([isBanned])
+}
+
+model Partner {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  inviterId   String?
+  level       Int      @default(1)
+  createdAt   DateTime @default(now())
+  user        User     @relation("PartnerUser", fields: [userId], references: [id], onDelete: Cascade)
+  inviter     User?    @relation("Inviter", fields: [inviterId], references: [id], onDelete: SetNull)
+
+  @@index([inviterId, level])
+}
+
+model StakingPool {
+  id                 String   @id @default(cuid())
+  userId             String
+  principalCredits   Decimal  @db.Decimal(30, 6)
+  startedAt          DateTime @default(now())
+  lastAccruedAt      DateTime @default(now())
+  autoCompound       Boolean  @default(true)
+  isActive           Boolean  @default(true)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  userId            String
+  type              TransactionType
+  status            TransactionStatus @default(COMPLETED)
+  amountCredits     Decimal           @db.Decimal(30, 6)
+  amountStars       Int?
+  idempotencyKey    String?           @unique
+  externalPaymentId String?
+  metadata          Json?
+  createdAt         DateTime          @default(now())
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type, status])
+}
+
+model WithdrawalRequest {
+  id           String           @id @default(cuid())
+  userId       String
+  amountCredits Decimal          @db.Decimal(30, 6)
+  requisites   Json
+  status       WithdrawalStatus @default(PENDING)
+  reviewedBy   BigInt?
+  reviewedAt   DateTime?
+  reviewNote   String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([userId, status])
+}
