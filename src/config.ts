@@ -13,6 +13,7 @@ const envSchema = z.object({
   RENDER_EXTERNAL_URL: z.preprocess((value) => value === "" ? undefined : value, z.string().url().optional()),
   ADMIN_IDS: z.string().optional().default(""),
   REQUIRED_CHAT_IDS: z.string().optional().default(""),
+  REQUIRED_CHAT_LINKS: z.string().optional().default(""),
   INIT_DATA_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(86400),
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(60),
   ENABLE_STARS_PAYMENTS: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
@@ -33,5 +34,6 @@ const csvToBigInt = (value: string): bigint[] => value
 export const config = {
   ...parsed.data,
   ADMIN_IDS: csvToBigInt(parsed.data.ADMIN_IDS),
-  REQUIRED_CHAT_IDS: parsed.data.REQUIRED_CHAT_IDS.split(",").map((item) => item.trim()).filter(Boolean)
+  REQUIRED_CHAT_IDS: parsed.data.REQUIRED_CHAT_IDS.split(",").map((item) => item.trim()).filter(Boolean),
+  REQUIRED_CHAT_LINKS: parsed.data.REQUIRED_CHAT_LINKS.split(",").map((item) => item.trim()).filter(Boolean)
 };

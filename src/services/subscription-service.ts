@@ -15,6 +15,10 @@ function cacheKey(telegramId: bigint, chatId: string): string {
   return `subscription:${telegramId.toString()}:${chatId}`;
 }
 
+export async function clearSubscriptionStatusCache(telegramId: bigint): Promise<void> {
+  await Promise.all(config.REQUIRED_CHAT_IDS.map((chatId) => redis.del(cacheKey(telegramId, chatId))));
+}
+
 export async function getSubscriptionStatuses(telegram: Telegram, telegramId: bigint): Promise<SubscriptionStatus[]> {
   const results = await Promise.all(config.REQUIRED_CHAT_IDS.map(async (chatId): Promise<SubscriptionStatus> => {
     const key = cacheKey(telegramId, chatId);

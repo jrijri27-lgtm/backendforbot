@@ -96,7 +96,13 @@ export function createServer(bot: Telegraf<Context> | null): FastifyInstance {
         return reply.code(503).send({ error: "BOT_NOT_CONFIGURED" });
       }
       const statuses = await getSubscriptionStatuses(bot.telegram, request.user!.telegramId);
-      return { required: statuses.length, subscribed: statuses.filter((status) => status.subscribed).length, statuses };
+      const links = statuses.map((status, index) => {
+        const configured = config.REQUIRED_CHAT_LINKS[index];
+        if (configured) return configured;
+        if (status.chatId.startsWith("@")) return `https://t.me/${status.chatId.slice(1)}`;
+        return null;
+      });
+      return { required: statuses.length, subscribed: statuses.filter((status) => status.subscribed).length, statuses, links };
     });
 
     protectedApi.post("/api/payments/invoice", { preHandler: requireSubscriptions }, async (request, reply) => {

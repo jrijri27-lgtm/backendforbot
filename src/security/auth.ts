@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { prisma } from "../infra/prisma.js";
 import { config } from "../config.js";
 import { InitDataError, validateInitData } from "./init-data.js";
+import { ensureTelegramUser } from "../services/user-service.js";
 
 function initDataFromRequest(request: FastifyRequest): string {
   const header = request.headers["x-telegram-init-data"];
@@ -19,20 +19,7 @@ export async function requireTelegramUser(request: FastifyRequest, reply: Fastif
   try {
     const validated = validateInitData(initDataFromRequest(request));
     const telegramId = BigInt(validated.user.id);
-    const user = await prisma.user.upsert({
-      where: { telegramId },
-      update: {
-        username: validated.user.username ?? null,
-        firstName: validated.user.first_name,
-        lastName: validated.user.last_name ?? null
-      },
-      create: {
-        telegramId,
-        username: validated.user.username ?? null,
-        firstName: validated.user.first_name,
-        lastName: validated.user.last_name ?? null
-      }
-    });
+    const user = await ensureTelegramUser(validated.user);
 
     if (user.isBanned) {
       reply.code(403).send({ error: "ACCOUNT_RESTRICTED" });

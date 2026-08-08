@@ -26,6 +26,8 @@ services:
         sync: false
       - key: REQUIRED_CHAT_IDS
         sync: false
+      - key: REQUIRED_CHAT_LINKS
+        sync: false
       - key: ENABLE_STARS_PAYMENTS
         value: "false"
       - key: ENABLE_REWARD_REDEMPTION
